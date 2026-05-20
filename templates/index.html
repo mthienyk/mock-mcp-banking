@@ -186,12 +186,23 @@
                     </button>
                 </div>
                 
-                <div class="relative bg-zinc-900/80 border border-zinc-850 rounded-xl p-4 font-mono text-xs text-zinc-300 overflow-x-auto">
+                <p class="text-[11px] text-emerald-400/90 font-semibold mb-2 uppercase tracking-wider">Recommandé (Streamable HTTP)</p>
+                <div class="relative bg-zinc-900/80 border border-emerald-900/40 rounded-xl p-4 font-mono text-xs text-zinc-300 overflow-x-auto mb-4">
                     <pre id="mcp-config-json">{
   "mcpServers": {
     "mcp-bank": {
+      "url": "{{ mcp_http_url }}"
+    }
+  }
+}</pre>
+                </div>
+                <p class="text-[11px] text-zinc-500 font-semibold mb-2 uppercase tracking-wider">Secours (SSE, clients plus anciens)</p>
+                <div class="relative bg-zinc-900/60 border border-zinc-850 rounded-xl p-4 font-mono text-[11px] text-zinc-500 overflow-x-auto">
+                    <pre>{
+  "mcpServers": {
+    "mcp-bank-sse": {
       "type": "sse",
-      "url": "{{ base_url }}sse?token={{ logged_in_user.token }}"
+      "url": "{{ mcp_sse_url }}"
     }
   }
 }</pre>
@@ -199,16 +210,16 @@
 
                 <div class="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs text-zinc-400 pt-2 border-t border-zinc-850/60 font-medium">
                     <div>
-                        <p class="text-zinc-300 font-bold mb-1">📋 Dans Cursor :</p>
-                        <p>Allez dans <code class="bg-zinc-900 px-1 py-0.5 rounded text-emerald-400">Settings > MCP</code>, cliquez sur <code class="bg-zinc-900 px-1 py-0.5 rounded text-emerald-400">+ Add New MCP Server</code>. Choisissez le type <strong class="text-zinc-200">SSE</strong> et collez l'URL ci-dessus.</p>
+                        <p class="text-zinc-300 font-bold mb-1">Dans Cursor</p>
+                        <p><code class="bg-zinc-900 px-1 py-0.5 rounded text-emerald-400">Settings &gt; MCP</code>, ajoutez le serveur avec l'URL Streamable HTTP ci-dessus. Le LLM lit d'abord la ressource <code class="text-emerald-400/80">bank://balances</code>, puis utilise les 3 outils d'action.</p>
                     </div>
                     <div>
-                        <p class="text-zinc-300 font-bold mb-1">🏦 Les Règles d'Action :</p>
+                        <p class="text-zinc-300 font-bold mb-1">Règles du jeu</p>
                         <ul class="list-disc pl-4 space-y-0.5 text-[11px] text-zinc-500">
-                            <li>Consultation libre des soldes individuels et du pot commun.</li>
-                            <li>Retraits du pot commun : maximum 1 000 € à la fois.</li>
-                            <li>Transferts entre élèves : maximum 1 000 € à la fois.</li>
-                            <li>Taxation d'un élève : confiscation et redistribution dès qu'il y a 2 votes.</li>
+                            <li>Soldes : ressource <code class="text-zinc-400">bank://balances</code> (lecture seule).</li>
+                            <li>Retraits / transferts : 0,01 € à 1 000 € par opération.</li>
+                            <li>Taxation : 2 votes uniques déclenchent la confiscation.</li>
+                            <li>Prénoms stricts (enum dans les schémas des outils).</li>
                         </ul>
                     </div>
                 </div>
