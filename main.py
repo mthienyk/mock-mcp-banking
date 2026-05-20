@@ -127,7 +127,7 @@ async def login(
     if not user:
         raise HTTPException(status_code=404, detail="Utilisateur non trouvé.")
 
-    response = RedirectResponse(url="/", status_code=303)
+    response = RedirectResponse(url="/?mcp=1", status_code=303)
     response.set_cookie(
         key="session_token",
         value=user.token,
