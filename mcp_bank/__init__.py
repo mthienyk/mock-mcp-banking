@@ -1,4 +1,4 @@
-"""MCP banking server for the promo IA educational demo."""
+"""Serveur MCP Banque MCP (simulateur bancaire pour atelier)."""
 
 from mcp_bank.auth import extract_api_token, resolve_session
 from mcp_bank.server import SERVER_NAME, SERVER_VERSION, get_shared_server

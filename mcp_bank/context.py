@@ -7,3 +7,4 @@ class BankSessionContext:
 
     user_id: int
     user_name: str
+    is_host: bool = False

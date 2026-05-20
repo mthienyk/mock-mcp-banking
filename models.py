@@ -63,3 +63,70 @@ class CommonPot(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     balance = Column(Float, default=1000000.0, nullable=False)
+
+
+class GameMeta(Base):
+    """Singleton: session (lobby → active → frozen) pilotée par l'animateur."""
+
+    __tablename__ = "game_meta"
+
+    id = Column(Integer, primary_key=True, index=True)
+    started_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    session_started_at = Column(DateTime, nullable=True)
+    phase = Column(String, default="discovery", nullable=False)
+    frozen_at = Column(DateTime, nullable=True)
+    frozen_reason = Column(String, nullable=True)
+
+
+class UserGameState(Base):
+    """État de jeu par élève (slots de retrait, fenêtre anti-spam)."""
+
+    __tablename__ = "user_game_state"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(
+        Integer, ForeignKey("users.id", ondelete="CASCADE"), unique=True, nullable=False
+    )
+    withdrawal_slots = Column(Integer, default=0, nullable=False)
+    last_slot_unlock_at = Column(DateTime, nullable=True)
+    withdraw_window_start = Column(DateTime, nullable=True)
+    withdraw_count_in_window = Column(Integer, default=0, nullable=False)
+    last_spy_at = Column(DateTime, nullable=True)
+
+    user = relationship("User", backref="game_state")
+
+
+class AllianceProposal(Base):
+    __tablename__ = "alliance_proposals"
+
+    id = Column(Integer, primary_key=True, index=True)
+    proposer_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    target_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    status = Column(String, default="pending", nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+
+    proposer = relationship("User", foreign_keys=[proposer_id])
+    target = relationship("User", foreign_keys=[target_id])
+
+
+class Alliance(Base):
+    __tablename__ = "alliances"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_a_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    user_b_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    formed_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+
+    user_a = relationship("User", foreign_keys=[user_a_id])
+    user_b = relationship("User", foreign_keys=[user_b_id])
+
+
+class BalanceSpy(Base):
+    """Dernière espionnage par (spy, target) pour cooldown."""
+
+    __tablename__ = "balance_spies"
+
+    id = Column(Integer, primary_key=True, index=True)
+    spy_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    target_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    spied_at = Column(DateTime, default=datetime.utcnow, nullable=False)

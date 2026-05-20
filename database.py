@@ -25,9 +25,9 @@ def _normalize_postgres_url(url: str) -> str:
 
 def _build_url_from_pg_env() -> str | None:
     host = os.getenv("PGHOST")
-    user = os.getenv("PGUSER")
-    password = os.getenv("PGPASSWORD")
-    database = os.getenv("PGDATABASE")
+    user = os.getenv("PGUSER") or os.getenv("POSTGRES_USER")
+    password = os.getenv("PGPASSWORD") or os.getenv("POSTGRES_PASSWORD")
+    database = os.getenv("PGDATABASE") or os.getenv("POSTGRES_DB")
     port = os.getenv("PGPORT", "5432")
     if not all([host, user, password, database]):
         return None
@@ -36,6 +36,23 @@ def _build_url_from_pg_env() -> str | None:
     return (
         f"postgresql://{safe_user}:{safe_password}@{host}:{port}/{database}"
     )
+
+
+def _postgres_env_configured() -> bool:
+    if os.getenv("DATABASE_URL"):
+        return True
+    host = os.getenv("PGHOST")
+    user = os.getenv("PGUSER") or os.getenv("POSTGRES_USER")
+    password = os.getenv("PGPASSWORD") or os.getenv("POSTGRES_PASSWORD")
+    database = os.getenv("PGDATABASE") or os.getenv("POSTGRES_DB")
+    return bool(host and user and password and database)
+
+
+def _railway_ssl_required(url: str) -> bool:
+    if os.getenv("DATABASE_SSL", "").lower() in {"1", "true", "require"}:
+        return True
+    host = url.split("@", 1)[-1].split("/", 1)[0].split(":", 1)[0].lower()
+    return host.endswith(".rlwy.net")
 
 
 def resolve_preferred_database_url() -> str:
@@ -47,7 +64,7 @@ def resolve_preferred_database_url() -> str:
         return _sqlite_url()
     url = _normalize_postgres_url(url)
     if url.startswith("postgresql://") and "sslmode=" not in url:
-        if os.getenv("DATABASE_SSL", "").lower() in {"1", "true", "require"}:
+        if _railway_ssl_required(url):
             separator = "&" if "?" in url else "?"
             url = f"{url}{separator}sslmode=require"
     return url
@@ -112,6 +129,16 @@ def initialize_database() -> str:
         probe_connection()
         return DB_BACKEND
     except Exception as exc:
+        allow_fallback = os.getenv("DATABASE_ALLOW_SQLITE_FALLBACK", "").lower() in {
+            "1",
+            "true",
+            "yes",
+        }
+        if _postgres_env_configured() and not allow_fallback:
+            raise RuntimeError(
+                "PostgreSQL is configured but unreachable. "
+                "Check DATABASE_URL / PG* variables and service linking."
+            ) from exc
         fallback = _sqlite_url()
         logger.warning(
             "PostgreSQL unavailable (%s). Falling back to SQLite at %s",

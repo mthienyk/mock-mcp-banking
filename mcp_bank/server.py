@@ -1,14 +1,17 @@
 from mcp.server import Server
 from mcp.types import CallToolResult
 
+from mcp_bank.branding import PRODUCT_NAME
 from mcp_bank.instructions import SERVER_INSTRUCTIONS
 from mcp_bank.registry import bank_registry
 from mcp_bank.resources.definitions import ALL_RESOURCES
-from mcp_bank.resources.handlers import read_balances
+from mcp_bank.resources.handlers import read_bank_resource
+from mcp_bank.tools import game_handlers as _game_handlers  # noqa: F401
 from mcp_bank.tools import handlers as _tool_handlers  # noqa: F401
+from mcp_bank.tools import host_handlers as _host_handlers  # noqa: F401
 
-SERVER_NAME = "L'Élite MCP Bank"
-SERVER_VERSION = "1.1.0"
+SERVER_NAME = PRODUCT_NAME
+SERVER_VERSION = "2.1.0"
 
 _shared_server: Server | None = None
 
@@ -31,7 +34,7 @@ def _register_handlers(server: Server) -> None:
 
     @server.read_resource()
     async def read_resource(uri):
-        return await read_balances(uri)
+        return await read_bank_resource(uri)
 
 
 def get_shared_server() -> Server:

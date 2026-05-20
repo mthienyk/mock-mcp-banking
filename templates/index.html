@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MCP Bank</title>
+    <title>{{ product_name }}</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -60,8 +60,8 @@
             <div class="flex items-center gap-3">
                 <div class="flex h-8 w-8 items-center justify-center rounded-md border border-zinc-800 bg-zinc-900 font-mono text-xs text-emerald-500">M</div>
                 <div>
-                    <p class="text-sm font-semibold tracking-tight text-zinc-100">MCP Bank</p>
-                    <p class="text-[11px] text-zinc-500">API bancaire simulée</p>
+                    <p class="text-sm font-semibold tracking-tight text-zinc-100">{{ product_name }}</p>
+                    <p class="text-[11px] text-zinc-500">{{ product_tagline }}</p>
                 </div>
             </div>
             <div class="flex items-center gap-2">
@@ -95,12 +95,18 @@
                 <div class="mt-6 space-y-4 font-mono text-xs text-zinc-600">
                     <p><span class="text-zinc-500">token</span> bank_…</p>
                     <p><span class="text-zinc-500">endpoint</span> /mcp?token=…</p>
-                    <p><span class="text-zinc-500">tools</span> get_balances, transfer, withdraw, tax</p>
+                    <p><span class="text-zinc-500">tools</span> unlock, withdraw, alliance, tax, spy…</p>
+                    {% if game_status %}
+                    <p class="mt-4 text-emerald-500/80">
+                        {% if not game_status.session_started %}{{ game_status.waiting_message }}{% else %}{{ game_status.phase_label }}{% if game_status.game_frozen %} · terminée{% endif %}{% endif %}
+                    </p>
+                    {% endif %}
                 </div>
             </div>
         </section>
         {% else %}
-        <section class="grid grid-cols-1 gap-8 lg:grid-cols-12 lg:gap-10">
+        <section class="grid grid-cols-1 gap-8 {% if is_host_session %}max-w-5xl{% else %}lg:grid-cols-12 lg:gap-10{% endif %}">
+            {% if not is_host_session %}
             <div class="panel rounded-2xl p-6 sm:p-8 lg:col-span-5">
                 <p class="text-xs font-medium uppercase tracking-wider text-zinc-500">Credentials</p>
                 <h2 class="mt-2 text-2xl font-semibold tracking-tight text-zinc-50">Jeton API</h2>
@@ -130,8 +136,50 @@
                     Guide de configuration
                 </button>
             </div>
+            {% endif %}
 
-            <div class="space-y-6 lg:col-span-7">
+            <div class="space-y-6 {% if not is_host_session %}lg:col-span-7{% endif %}">
+                {% if is_host_session %}
+                <div class="panel rounded-2xl p-6 sm:p-8">
+                    <p class="text-xs font-medium uppercase tracking-wider text-zinc-500">Vue observateur</p>
+                    <h2 class="mt-2 text-2xl font-semibold tracking-tight text-zinc-50">Session en direct</h2>
+                    <p class="mt-2 text-sm text-zinc-500">Démarre la session depuis ton MCP : <code class="text-zinc-400">start_game_session</code></p>
+                    {% if game_status %}
+                    <div class="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-3">
+                        <div class="rounded-lg border border-zinc-800 bg-zinc-900/50 px-4 py-3">
+                            <p class="text-[10px] uppercase tracking-wider text-zinc-600">Phase</p>
+                            <p class="mt-1 text-sm font-medium text-zinc-100">{{ game_status.phase_label }}</p>
+                        </div>
+                        <div class="rounded-lg border border-zinc-800 bg-zinc-900/50 px-4 py-3">
+                            <p class="text-[10px] uppercase tracking-wider text-zinc-600">Session</p>
+                            <p class="mt-1 text-sm text-emerald-400">
+                                {% if not game_status.session_started %}En attente{% elif game_status.game_frozen %}Terminée{% else %}En cours{% endif %}
+                            </p>
+                        </div>
+                        <div class="rounded-lg border border-zinc-800 bg-zinc-900/50 px-4 py-3 col-span-2 sm:col-span-1">
+                            <p class="text-[10px] uppercase tracking-wider text-zinc-600">Pot commun</p>
+                            <p class="mt-1 font-mono text-sm text-zinc-200">{{ "{:,.0f}".format(common_pot.balance) }} €</p>
+                        </div>
+                    </div>
+                    <p class="mt-4 text-[11px] text-zinc-600">Fin : <code class="text-zinc-500">end_game_session</code> · Phase + : <code class="text-zinc-500">advance_game_phase</code></p>
+                    {% endif %}
+                </div>
+                {% endif %}
+
+                {% if game_status and not is_host_session %}
+                <div class="rounded-lg border border-emerald-900/30 bg-emerald-950/15 px-4 py-3 text-xs text-emerald-100/90">
+                    <p class="font-semibold">{{ game_status.phase_label }}</p>
+                    <p class="mt-1 text-emerald-200/70">{{ game_status.phase_hint }}</p>
+                    <p class="mt-2 font-mono text-[11px] text-emerald-300/80">
+                        {% if not game_status.session_started %}{{ game_status.waiting_message }}{% elif game_status.game_frozen %}Session terminée{% else %}Session en cours{% endif %}
+                        {% if game_status.your_withdrawal_slots is defined %}
+                        · slots {{ game_status.your_withdrawal_slots }}/{{ game_status.max_slots_banked }}
+                        {% endif %}
+                    </p>
+                </div>
+                {% endif %}
+
+                {% if not is_host_session %}
                 <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
                     <div class="border-t border-zinc-800 pt-4">
                         <p class="text-xs font-medium uppercase tracking-wider text-zinc-500">Solde</p>
@@ -146,6 +194,46 @@
                         </p>
                     </div>
                 </div>
+                {% endif %}
+
+                <div class="border-t border-zinc-800 pt-6">
+                    <h3 class="text-sm font-semibold text-zinc-200">Classement live</h3>
+                    <p class="mt-1 text-[11px] text-zinc-500">
+                        {% if is_host_session %}Tous les participants{% else %}Objectif : finir #1 au solde personnel{% endif %}
+                    </p>
+                    <ol class="mt-4 space-y-2">
+                        {% for row in leaderboard[:leaderboard_limit] %}
+                        <li class="flex items-center justify-between text-xs {% if not is_host_session and row.name == logged_in_user.name %}text-emerald-300{% else %}text-zinc-400{% endif %}">
+                            <span><span class="font-mono text-zinc-600">#{{ row.rank }}</span> {{ row.name }}</span>
+                            <span class="font-mono">{{ "{:,.2f}".format(row.balance_eur) }} €</span>
+                        </li>
+                        {% endfor %}
+                    </ol>
+                </div>
+
+                {% if is_host_session and active_votes %}
+                <div class="border-t border-zinc-800 pt-6">
+                    <h3 class="text-sm font-semibold text-zinc-200">Votes de taxation</h3>
+                    <ul class="mt-3 space-y-2 text-xs text-zinc-400">
+                        {% for target, voters in active_votes.items() %}
+                        <li><span class="text-zinc-300">{{ target }}</span> ← {{ voters|join(', ') }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                {% endif %}
+
+                {% if not is_host_session %}
+                <details class="border-t border-zinc-800 pt-4 text-xs text-zinc-500">
+                    <summary class="cursor-pointer font-medium text-zinc-400">Règles express (MCP)</summary>
+                    <ul class="mt-3 list-disc space-y-1 pl-4 leading-relaxed">
+                        <li>Retrait : <code class="text-zinc-400">unlock_withdrawal_slot</code> puis <code class="text-zinc-400">withdraw_from_common_pot</code></li>
+                        <li>Automatisez avec Claude Code (boucle + sleep sur cooldown)</li>
+                        <li>Alliance : propose + respond → intel gratuit sur l'allié</li>
+                        <li>Taxation collective : 2 votes (3 si allié en phase 2)</li>
+                        <li>Espionnage payant si pas d'alliance</li>
+                    </ul>
+                </details>
+                {% endif %}
 
                 <div class="border-t border-zinc-800 pt-6">
                     <div class="mb-4 flex items-end justify-between">
@@ -196,7 +284,15 @@
                                 onclick="selectIdentity('{{ name }}', this)">{{ name }}</button>
                             {% endfor %}
                         </div>
-                        <p id="name-hint" class="mt-2 text-[11px] text-zinc-600">Choisissez un compte</p>
+                        {% if host_name %}
+                        <div class="mt-3 border-t border-zinc-800/80 pt-3">
+                            <p class="mb-2 text-[10px] font-medium uppercase tracking-wider text-zinc-600">Animateur</p>
+                            <button type="button"
+                                class="pill rounded-md border border-amber-900/60 bg-amber-950/30 px-2.5 py-1.5 text-xs font-medium text-amber-200/90 transition-all hover:border-amber-700/60"
+                                onclick="selectIdentity('{{ host_name }}', this)">{{ host_name }} (animateur)</button>
+                        </div>
+                        {% endif %}
+                        <p id="name-hint" class="mt-2 text-[11px] text-zinc-600">Choisissez un compte élève ou animateur</p>
                     </div>
                     <div>
                         <label for="password" class="mb-2 block text-xs font-medium text-zinc-500">Code d'accès</label>

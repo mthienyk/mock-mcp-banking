@@ -9,6 +9,7 @@ from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 
 from database import DB_BACKEND, SessionLocal, get_db, get_db_status
+from mcp_bank.branding import PRODUCT_NAME, PRODUCT_TAGLINE
 from mcp_bank import (
     create_session_manager,
     extract_api_token,
@@ -18,6 +19,7 @@ from mcp_bank import (
     sse_transport,
 )
 from mcp_bank.runtime import bind_session, release_session
+import game_services
 from models import User
 import services
 
@@ -46,7 +48,7 @@ async def lifespan(_: FastAPI):
         yield
 
 
-app = FastAPI(title="MCP Bank", lifespan=lifespan)
+app = FastAPI(title=PRODUCT_NAME, lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
@@ -71,13 +73,34 @@ def _index_context(
         "request": request,
         "logged_in_user": logged_in_user,
         "account_names": services.STUDENT_NAMES,
+        "host_name": services.HOST_NAME,
+        "is_host_session": (
+            services.is_host(logged_in_user) if logged_in_user else False
+        ),
         "common_pot": services.get_common_pot(db),
         "transactions": services.get_transactions_history(db, limit=20),
         "active_votes": services.get_active_votes_status(db),
+        "leaderboard": game_services.get_leaderboard(db),
+        "leaderboard_limit": (
+            15
+            if logged_in_user and services.is_host(logged_in_user)
+            else 8
+        ),
+        "game_status": (
+            game_services.get_public_game_status(db)
+            if logged_in_user and services.is_host(logged_in_user)
+            else (
+                game_services.get_game_status_payload(db, logged_in_user)
+                if logged_in_user
+                else game_services.get_public_game_status(db)
+            )
+        ),
         "base_url": base + "/",
         "mcp_sse_url": f"{base}/sse?token={token}" if token else "",
         "mcp_http_url": f"{base}/mcp?token={token}" if token else "",
         "error": error,
+        "product_name": PRODUCT_NAME,
+        "product_tagline": PRODUCT_TAGLINE,
         "db_backend": DB_BACKEND,
         "db_is_fallback": DB_BACKEND == "sqlite-fallback",
     }
@@ -90,7 +113,7 @@ async def health() -> dict[str, str]:
 
     db = SessionLocal()
     try:
-        student_count = db.query(User).count()
+        student_count = services.count_students(db)
     finally:
         db.close()
     status = get_db_status()

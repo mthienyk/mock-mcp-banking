@@ -53,6 +53,10 @@ def resolve_session(token: str) -> BankSessionContext:
         user = services.get_user_by_token(db, token)
         if not user:
             raise HTTPException(status_code=401, detail="Jeton d'API invalide.")
-        return BankSessionContext(user_id=user.id, user_name=user.name)
+        return BankSessionContext(
+            user_id=user.id,
+            user_name=user.name,
+            is_host=services.is_host(user),
+        )
     finally:
         db.close()

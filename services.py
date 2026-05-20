@@ -1,15 +1,19 @@
 import logging
+import os
 from datetime import datetime
 from typing import Dict, List, Optional
 
 from sqlalchemy.orm import Session
 
 from database import Base, SessionLocal, engine, initialize_database
-from models import CommonPot, TaxVote, Transaction, User
+from models import CommonPot, GameMeta, TaxVote, Transaction, User
 
 logger = logging.getLogger(__name__)
 
-# List of students as requested by the user
+HOST_NAME = os.getenv("HOST_NAME", "Thieny")
+HOST_DEMO_BALANCE_EUR = 10_000.0
+
+# Session participants (host account is separate)
 STUDENT_NAMES = [
     "Alexandre",
     "Chahira",
@@ -26,8 +30,15 @@ STUDENT_NAMES = [
     "Sirine",
     "Theo",
     "Yann",
-    "Thieny",
 ]
+
+
+def is_host(user: User) -> bool:
+    return user.name.lower() == HOST_NAME.lower()
+
+
+def count_students(db: Session) -> int:
+    return db.query(User).filter(~User.name.ilike(HOST_NAME)).count()
 
 
 def init_db():
@@ -36,13 +47,15 @@ def init_db():
 
 
 def ensure_common_pot(db: Session) -> CommonPot:
+    from mcp_bank.game_rules import POT_INITIAL_EUR
+
     pot = db.query(CommonPot).first()
     if not pot:
-        pot = CommonPot(balance=1000000.0)
+        pot = CommonPot(balance=POT_INITIAL_EUR)
         db.add(pot)
         db.commit()
         db.refresh(pot)
-        logger.info("Common pot created with 1 000 000 €")
+        logger.info("Common pot created with %.0f €", POT_INITIAL_EUR)
     return pot
 
 
@@ -62,15 +75,46 @@ def sync_students(db: Session) -> list[str]:
     return created
 
 
+def sync_host(db: Session) -> None:
+    """Ensure the training host account exists (login + MCP, no game impact)."""
+    if get_user_by_name(db, HOST_NAME):
+        return
+    host = User(
+        name=HOST_NAME,
+        token=User.generate_token(HOST_NAME),
+        balance=0.0,
+    )
+    db.add(host)
+    db.commit()
+    logger.info("Host account created: %s", HOST_NAME)
+
+
+def ensure_game_meta(db: Session) -> GameMeta:
+    meta = db.query(GameMeta).first()
+    if not meta:
+        meta = GameMeta()
+        db.add(meta)
+        db.commit()
+        db.refresh(meta)
+    return meta
+
+
 def seed_database(db: Session) -> None:
-    """Idempotent deploy setup: tables, pot commun, liste promo à jour."""
+    """Idempotent deploy setup: tables, pot commun, liste participants à jour."""
+    import game_services
+
     init_db()
+    game_services.migrate_game_schema()
     ensure_common_pot(db)
+    ensure_game_meta(db)
     sync_students(db)
+    sync_host(db)
 
 
 def run_deploy_setup() -> None:
     """Run before web workers start (Railway release phase + startup fallback)."""
+    import game_services
+
     initialize_database()
     if SessionLocal is None or engine is None:
         raise RuntimeError("Database session factory unavailable after init")
@@ -78,14 +122,15 @@ def run_deploy_setup() -> None:
     db = SessionLocal()
     try:
         seed_database(db)
-        student_count = db.query(User).count()
+        student_count = count_students(db)
         pot_balance = ensure_common_pot(db).balance
         from database import DB_BACKEND
 
         logger.info(
-            "Deploy DB ready [%s]: %s students, pot commun %.2f €",
+            "Deploy DB ready [%s]: %s students + host %s, pot commun %.2f €",
             DB_BACKEND,
             student_count,
+            HOST_NAME,
             pot_balance,
         )
     finally:
@@ -112,20 +157,74 @@ def get_common_pot(db: Session) -> CommonPot:
     return pot
 
 
+def _mock_withdraw(db: Session, user: User, amount: float) -> Dict[str, object]:
+    pot = get_common_pot(db)
+    return {
+        "success": True,
+        "mock": True,
+        "amount": amount,
+        "user_balance": user.balance,
+        "common_pot_balance": pot.balance,
+        "display_balance": HOST_DEMO_BALANCE_EUR,
+    }
+
+
+def _mock_transfer(
+    db: Session,
+    sender: User,
+    receiver_name: str,
+    amount: float,
+) -> Dict[str, object]:
+    receiver = get_user_by_name(db, receiver_name)
+    if not receiver:
+        raise ValueError(f"L'utilisateur '{receiver_name}' n'existe pas.")
+    return {
+        "success": True,
+        "mock": True,
+        "amount": amount,
+        "sender_balance": sender.balance,
+        "receiver_name": receiver.name,
+        "receiver_balance": receiver.balance,
+        "display_sender_balance": HOST_DEMO_BALANCE_EUR,
+    }
+
+
+def _mock_tax_vote(db: Session, voter: User, target_name: str) -> Dict[str, object]:
+    import game_services as gs
+
+    target = get_user_by_name(db, target_name)
+    if not target:
+        raise ValueError(f"L'utilisateur '{target_name}' n'existe pas.")
+    if voter.id == target.id:
+        raise ValueError("Vous ne pouvez pas voter pour vous taxer vous-même.")
+    vote_count = db.query(TaxVote).filter(TaxVote.target_id == target.id).count()
+    votes_needed = gs.taxation_votes_required(db, target)
+    return {
+        "success": True,
+        "mock": True,
+        "taxation_triggered": False,
+        "target_name": target.name,
+        "current_votes": vote_count,
+        "votes_needed": max(0, votes_needed - vote_count),
+        "message": (
+            f"[Simulation animateur] Vote fictif contre {target.name}. "
+            f"Aucun effet sur la banque ({vote_count}/2 votes réels en cours)."
+        ),
+    }
+
+
 def withdraw_from_common_pot(db: Session, user: User, amount: float) -> Dict[str, any]:
-    """Withdraws money from the common pot into the user's individual pot.
+    """Withdraws money from the common pot (requires a pre-unlocked slot)."""
+    import game_services
 
-    Limit: 1000 euros per transaction.
-    """
-    if amount <= 0:
-        raise ValueError("L'argent retiré doit être supérieur à 0.")
-
-    if amount > 1000.0:
-        raise ValueError("Vous ne pouvez pas retirer plus de 1000 € à la fois.")
+    if is_host(user):
+        return _mock_withdraw(db, user, amount)
 
     pot = get_common_pot(db)
     if pot.balance < amount:
         raise ValueError("Le pot commun ne contient pas assez de fonds.")
+
+    game_services.consume_withdrawal_slot(db, user, amount)
 
     # Execute transfer
     pot.balance -= amount
@@ -153,15 +252,13 @@ def withdraw_from_common_pot(db: Session, user: User, amount: float) -> Dict[str
 
 
 def transfer_funds(db: Session, sender: User, receiver_name: str, amount: float) -> Dict[str, any]:
-    """Transfers funds from the sender's individual pot to another user's pot.
+    """Transfers funds between students (phase-dependent cap)."""
+    import game_services
 
-    Limit: 1000 euros per transaction. Sender must have sufficient balance.
-    """
-    if amount <= 0:
-        raise ValueError("Le montant du transfert doit être supérieur à 0.")
+    if is_host(sender):
+        return _mock_transfer(db, sender, receiver_name, amount)
 
-    if amount > 1000.0:
-        raise ValueError("Vous ne pouvez pas transférer plus de 1000 € à la fois.")
+    game_services.validate_transfer_amount(db, amount)
 
     if sender.balance < amount:
         raise ValueError(f"Fonds insuffisants. Solde actuel : {sender.balance} €.")
@@ -169,6 +266,11 @@ def transfer_funds(db: Session, sender: User, receiver_name: str, amount: float)
     receiver = get_user_by_name(db, receiver_name)
     if not receiver:
         raise ValueError(f"L'utilisateur '{receiver_name}' n'existe pas.")
+
+    if is_host(receiver):
+        raise ValueError(
+            "Transfert vers l'animateur interdit (compte hors compétition)."
+        )
 
     if sender.id == receiver.id:
         raise ValueError("Vous ne pouvez pas vous envoyer de l'argent à vous-même.")
@@ -204,12 +306,27 @@ def tax_user_vote(db: Session, voter: User, target_name: str) -> Dict[str, any]:
 
     the target's entire balance is confiscated and redistributed equally among all other users.
     """
+    if is_host(voter):
+        return _mock_tax_vote(db, voter, target_name)
+
+    import game_services as gs
+
+    gs.assert_game_mutable(db)
+
     target = get_user_by_name(db, target_name)
     if not target:
         raise ValueError(f"L'utilisateur '{target_name}' n'existe pas.")
 
     if voter.id == target.id:
         raise ValueError("Vous ne pouvez pas voter pour vous taxer vous-même.")
+
+    if is_host(target):
+        raise ValueError("L'animateur ne peut pas être taxé.")
+
+    if target.balance <= 0:
+        raise ValueError(
+            f"{target.name} n'a aucun solde à confisquer (vote inutile)."
+        )
 
     # Check for duplicate vote
     existing_vote = (
@@ -226,13 +343,18 @@ def tax_user_vote(db: Session, voter: User, target_name: str) -> Dict[str, any]:
     # Count votes against the target
     vote_count = db.query(TaxVote).filter(TaxVote.target_id == target.id).count()
 
-    if vote_count >= 2:
+    votes_needed = gs.taxation_votes_required(db, target)
+    if vote_count >= votes_needed:
         # Trigger Taxation!
         taxable_amount = target.balance
 
         if taxable_amount > 0:
             # Get all other users (excluding the target)
-            other_users = db.query(User).filter(User.id != target.id).all()
+            other_users = [
+                u
+                for u in db.query(User).filter(User.id != target.id).all()
+                if not is_host(u)
+            ]
             num_others = len(other_users)
 
             if num_others > 0:
@@ -283,13 +405,17 @@ def tax_user_vote(db: Session, voter: User, target_name: str) -> Dict[str, any]:
         }
 
     db.commit()
+    remaining = votes_needed - vote_count
     return {
         "success": True,
         "taxation_triggered": False,
         "target_name": target.name,
         "current_votes": vote_count,
-        "votes_needed": 2 - vote_count,
-        "message": f"Vote enregistré contre {target.name}. ({vote_count}/2 votes reçus).",
+        "votes_needed": remaining,
+        "message": (
+            f"Vote enregistré contre {target.name}. "
+            f"({vote_count}/{votes_needed} votes requis)."
+        ),
     }
 
 
@@ -300,7 +426,7 @@ def get_transactions_history(db: Session, limit: int = 20) -> List[Transaction]:
 
 def get_active_votes_status(db: Session) -> Dict[str, List[str]]:
     """Gets the status of active tax votes against all users."""
-    users = db.query(User).all()
+    users = db.query(User).filter(~User.name.ilike(HOST_NAME)).all()
     status = {}
     for u in users:
         votes = db.query(TaxVote).filter(TaxVote.target_id == u.id).all()
