@@ -1,4 +1,6 @@
+import logging
 import os
+
 from fastapi import Depends, FastAPI, Form, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse, RedirectResponse
@@ -11,6 +13,9 @@ from mcp.server import Server
 from mcp.types import CallToolResult, Tool, TextContent
 from models import User
 import services
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 app = FastAPI(title="L'Élite MCP Bank")
 
@@ -26,14 +31,13 @@ app.add_middleware(
 # Templates directory setup
 templates = Jinja2Templates(directory="templates")
 
-# Initialize and seed database on application startup
 @app.on_event("startup")
 def startup_event():
-    db = SessionLocal()
     try:
-        services.seed_database(db)
-    finally:
-        db.close()
+        services.run_deploy_setup()
+    except Exception:
+        logger.exception("Database initialization failed on startup")
+        raise
 
 
 # Initialize the SSE transport for MCP

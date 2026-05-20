@@ -1,9 +1,13 @@
+import logging
 from datetime import datetime
 from typing import Dict, List, Optional
+
 from sqlalchemy.orm import Session
 
-from database import Base, engine
+from database import Base, SessionLocal, engine
 from models import CommonPot, TaxVote, Transaction, User
+
+logger = logging.getLogger(__name__)
 
 # List of students as requested by the user
 STUDENT_NAMES = [
@@ -31,25 +35,54 @@ def init_db():
     Base.metadata.create_all(bind=engine)
 
 
-def seed_database(db: Session) -> None:
-    """Seeds the database with users and the common pot if they don't exist."""
-    init_db()
-
-    # Seed the Common Pot if not present
+def ensure_common_pot(db: Session) -> CommonPot:
     pot = db.query(CommonPot).first()
     if not pot:
         pot = CommonPot(balance=1000000.0)
         db.add(pot)
         db.commit()
+        db.refresh(pot)
+        logger.info("Common pot created with 1 000 000 €")
+    return pot
 
-    # Seed the users if not present
-    user_count = db.query(User).count()
-    if user_count == 0:
-        for name in STUDENT_NAMES:
-            token = User.generate_token(name)
-            user = User(name=name, token=token, balance=0.0)
-            db.add(user)
+
+def sync_students(db: Session) -> list[str]:
+    """Add any student from STUDENT_NAMES missing in the database."""
+    existing_names = {name.lower() for name, in db.query(User.name).all()}
+    created: list[str] = []
+    for name in STUDENT_NAMES:
+        if name.lower() in existing_names:
+            continue
+        user = User(name=name, token=User.generate_token(name), balance=0.0)
+        db.add(user)
+        created.append(name)
+    if created:
         db.commit()
+        logger.info("Added students: %s", ", ".join(created))
+    return created
+
+
+def seed_database(db: Session) -> None:
+    """Idempotent deploy setup: tables, pot commun, liste promo à jour."""
+    init_db()
+    ensure_common_pot(db)
+    sync_students(db)
+
+
+def run_deploy_setup() -> None:
+    """Run before web workers start (Railway release phase + startup fallback)."""
+    db = SessionLocal()
+    try:
+        seed_database(db)
+        student_count = db.query(User).count()
+        pot_balance = ensure_common_pot(db).balance
+        logger.info(
+            "Deploy DB ready: %s students, pot commun %.2f €",
+            student_count,
+            pot_balance,
+        )
+    finally:
+        db.close()
 
 
 def get_user_by_token(db: Session, token: str) -> Optional[User]:
