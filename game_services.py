@@ -43,11 +43,13 @@ def migrate_game_schema() -> None:
     """Migrations légères game_meta (phase, session_started_at)."""
     from sqlalchemy import inspect, text
 
-    from database import engine
+    from database import get_engine
 
-    if engine is None:
+    try:
+        db_engine = get_engine()
+    except RuntimeError:
         return
-    inspector = inspect(engine)
+    inspector = inspect(db_engine)
     if "game_meta" not in inspector.get_table_names():
         return
     columns = {col["name"] for col in inspector.get_columns("game_meta")}
@@ -60,7 +62,7 @@ def migrate_game_schema() -> None:
         statements.append("ALTER TABLE game_meta ADD COLUMN session_started_at DATETIME")
     if not statements:
         return
-    with engine.connect() as connection:
+    with db_engine.connect() as connection:
         for ddl in statements:
             connection.execute(text(ddl))
         connection.execute(

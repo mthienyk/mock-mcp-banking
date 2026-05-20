@@ -170,11 +170,24 @@ def ensure_database_initialized() -> str:
     return backend
 
 
-def get_db():
+def get_engine() -> Engine:
+    """Engine après init (évite les imports figés à None)."""
+    ensure_database_initialized()
+    if engine is None:
+        raise RuntimeError("Database engine not initialized")
+    return engine
+
+
+def open_db_session():
+    """Nouvelle session SQLAlchemy après init."""
     ensure_database_initialized()
     if SessionLocal is None:
-        raise RuntimeError("Database not initialized")
-    db = SessionLocal()
+        raise RuntimeError("Database session factory unavailable after init")
+    return SessionLocal()
+
+
+def get_db():
+    db = open_db_session()
     try:
         yield db
     finally:

@@ -8,7 +8,7 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 
-from database import DB_BACKEND, ensure_database_initialized, get_db, get_db_status
+from database import DB_BACKEND, get_db, get_db_status, open_db_session
 from mcp_bank.branding import PRODUCT_NAME, PRODUCT_TAGLINE
 from mcp_bank.public_url import resolve_public_base_url
 from mcp_bank import (
@@ -112,8 +112,7 @@ async def health() -> dict[str, str]:
     from mcp_bank.registry import bank_registry
     from mcp_bank.resources.definitions import ALL_RESOURCES
 
-    ensure_database_initialized()
-    db = SessionLocal()
+    db = open_db_session()
     try:
         student_count = services.count_students(db)
     finally:

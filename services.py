@@ -5,7 +5,7 @@ from typing import Dict, List, Optional
 
 from sqlalchemy.orm import Session
 
-from database import Base, SessionLocal, engine, ensure_database_initialized
+from database import Base, ensure_database_initialized, get_engine, open_db_session
 from models import CommonPot, GameMeta, TaxVote, Transaction, User
 
 logger = logging.getLogger(__name__)
@@ -43,7 +43,7 @@ def count_students(db: Session) -> int:
 
 def init_db():
     """Create tables if they do not exist."""
-    Base.metadata.create_all(bind=engine)
+    Base.metadata.create_all(bind=get_engine())
 
 
 def ensure_common_pot(db: Session) -> CommonPot:
@@ -116,10 +116,7 @@ def run_deploy_setup() -> None:
     import game_services
 
     ensure_database_initialized()
-    if SessionLocal is None or engine is None:
-        raise RuntimeError("Database session factory unavailable after init")
-
-    db = SessionLocal()
+    db = open_db_session()
     try:
         seed_database(db)
         student_count = count_students(db)

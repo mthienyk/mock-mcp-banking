@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 
 import game_services
 import services
-from database import SessionLocal, ensure_database_initialized
+from database import open_db_session
 from mcp_bank.resources.definitions import BALANCES_URI, GAME_URI, LEADERBOARD_URI
 from mcp_bank.runtime import require_session
 from models import User
@@ -17,9 +17,8 @@ def _load_user(db: Session, user_id: int) -> User | None:
 
 async def read_bank_resource(uri: AnyUrl) -> str:
     uri_str = str(uri)
-    ensure_database_initialized()
     session = require_session()
-    db = SessionLocal()
+    db = open_db_session()
     try:
         user = _load_user(db, session.user_id)
         if user is None:
