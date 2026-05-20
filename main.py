@@ -8,7 +8,7 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 
-from database import SessionLocal, get_db
+from database import DB_BACKEND, SessionLocal, get_db, get_db_status
 from mcp_bank import (
     create_session_manager,
     extract_api_token,
@@ -33,10 +33,16 @@ async def lifespan(_: FastAPI):
     try:
         services.run_deploy_setup()
     except Exception:
-        logger.exception("Database initialization failed on startup")
-        raise
+        logger.exception(
+            "Database setup failed; app continues only if fallback succeeded"
+        )
+        if DB_BACKEND == "uninitialized":
+            raise
     async with streamable_manager.run():
-        logger.info("MCP Streamable HTTP manager started at /mcp")
+        logger.info(
+            "MCP Streamable HTTP started at /mcp (db=%s)",
+            DB_BACKEND,
+        )
         yield
 
 
@@ -72,6 +78,8 @@ def _index_context(
         "mcp_sse_url": f"{base}/sse?token={token}" if token else "",
         "mcp_http_url": f"{base}/mcp?token={token}" if token else "",
         "error": error,
+        "db_backend": DB_BACKEND,
+        "db_is_fallback": DB_BACKEND == "sqlite-fallback",
     }
 
 
@@ -85,11 +93,13 @@ async def health() -> dict[str, str]:
         student_count = db.query(User).count()
     finally:
         db.close()
+    status = get_db_status()
     return {
         "status": "ok",
         "students": str(student_count),
         "mcp_tools": str(len(bank_registry.list_tools())),
         "mcp_resources": str(len(ALL_RESOURCES)),
+        "database": status["backend"],
     }
 
 

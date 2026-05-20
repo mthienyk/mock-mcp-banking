@@ -54,6 +54,11 @@
     data-open-login="{{ 'true' if error else 'false' }}"
 >
 
+    {% if db_is_fallback %}
+    <div class="bg-amber-950/80 border-b border-amber-800/60 text-center py-2 px-4 text-xs text-amber-200 font-medium">
+        Mode démo local : PostgreSQL indisponible. Données en SQLite (session en cours, non partagées entre redéploiements).
+    </div>
+    {% endif %}
     <header class="border-b border-zinc-800 bg-zinc-950/80 backdrop-blur-md sticky top-0 z-40">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
             <div class="flex items-center space-x-3">

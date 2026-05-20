@@ -4,7 +4,7 @@ from typing import Dict, List, Optional
 
 from sqlalchemy.orm import Session
 
-from database import Base, SessionLocal, engine
+from database import Base, SessionLocal, engine, initialize_database
 from models import CommonPot, TaxVote, Transaction, User
 
 logger = logging.getLogger(__name__)
@@ -71,13 +71,20 @@ def seed_database(db: Session) -> None:
 
 def run_deploy_setup() -> None:
     """Run before web workers start (Railway release phase + startup fallback)."""
+    initialize_database()
+    if SessionLocal is None or engine is None:
+        raise RuntimeError("Database session factory unavailable after init")
+
     db = SessionLocal()
     try:
         seed_database(db)
         student_count = db.query(User).count()
         pot_balance = ensure_common_pot(db).balance
+        from database import DB_BACKEND
+
         logger.info(
-            "Deploy DB ready: %s students, pot commun %.2f €",
+            "Deploy DB ready [%s]: %s students, pot commun %.2f €",
+            DB_BACKEND,
             student_count,
             pot_balance,
         )
