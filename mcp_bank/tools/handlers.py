@@ -5,8 +5,33 @@ from mcp.types import CallToolResult
 from mcp_bank.errors import parse_amount, parse_string, text_result
 from mcp_bank.registry import bank_registry
 from mcp_bank.schemas import MAX_TRANSACTION_EUR, MIN_TRANSACTION_EUR
-from mcp_bank.tools.definitions import TAX_USER, TRANSFER_TO_USER, WITHDRAW_FROM_COMMON_POT
+from mcp_bank.tools.definitions import (
+    GET_BALANCES,
+    TAX_USER,
+    TRANSFER_TO_USER,
+    WITHDRAW_FROM_COMMON_POT,
+)
 from models import User
+
+
+def _format_balances(user: User, pot_balance: float) -> str:
+    return (
+        "=== SOLDE BANCAIRE ===\n"
+        f"Titulaire : {user.name}\n"
+        f"Votre solde personnel : {user.balance:,.2f} €\n"
+        f"Solde du pot commun : {pot_balance:,.2f} €\n"
+        "====================="
+    )
+
+
+@bank_registry.register(GET_BALANCES)
+async def handle_get_balances(
+    db: Session,
+    user: User,
+    arguments: dict[str, object],
+) -> CallToolResult:
+    pot = services.get_common_pot(db)
+    return text_result(_format_balances(user, pot.balance))
 
 
 def _validate_amount(amount: float | None) -> str | None:

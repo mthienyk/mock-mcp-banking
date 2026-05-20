@@ -2,8 +2,8 @@ SERVER_INSTRUCTIONS = """\
 Tu es connecté à L'Élite MCP Bank (démo pédagogique promo IA 2026).
 
 Workflow recommandé :
-1. Lire la ressource bank://balances (lecture seule, sans effet de bord).
-2. Utiliser les outils uniquement pour agir (retrait, transfert, vote de taxation).
+1. Consulter les soldes avec l'outil get_balances (ou la ressource bank://balances).
+2. Utiliser les autres outils pour agir (retrait, transfert, vote de taxation).
 
 Règles :
 - Pot commun partagé : 1 000 000 € au départ.
@@ -12,5 +12,5 @@ Règles :
 - Taxation : 2 votes uniques contre un élève confisquent son solde et le \
 redistribuent aux autres.
 - Utilise les prénoms exacts listés dans les schémas (enum).
-- Ne jamais utiliser un outil pour consulter les soldes : utilise bank://balances.
+- Pour les soldes : get_balances en priorité (visible dans Claude), ou bank://balances.
 """
