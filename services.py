@@ -5,7 +5,7 @@ from typing import Dict, List, Optional
 
 from sqlalchemy.orm import Session
 
-from database import Base, SessionLocal, engine, initialize_database
+from database import Base, SessionLocal, engine, ensure_database_initialized
 from models import CommonPot, GameMeta, TaxVote, Transaction, User
 
 logger = logging.getLogger(__name__)
@@ -115,7 +115,7 @@ def run_deploy_setup() -> None:
     """Run before web workers start (Railway release phase + startup fallback)."""
     import game_services
 
-    initialize_database()
+    ensure_database_initialized()
     if SessionLocal is None or engine is None:
         raise RuntimeError("Database session factory unavailable after init")
 

@@ -350,9 +350,14 @@
     <script>
         const body = document.body;
         const isLoggedIn = body.dataset.loggedIn === 'true';
-        const baseUrl = body.dataset.baseUrl || window.location.origin;
-        const mcpHttp = body.dataset.mcpHttp;
-        const mcpSse = body.dataset.mcpSse;
+        function ensureHttps(url) {
+            if (!url || url.startsWith('https:')) return url;
+            if (/localhost|127\.0\.0\.1/.test(url)) return url;
+            return url.replace(/^http:/, 'https:');
+        }
+        const baseUrl = ensureHttps(body.dataset.baseUrl || window.location.origin);
+        const mcpHttp = ensureHttps(body.dataset.mcpHttp || (baseUrl + '/mcp?token=' + token));
+        const mcpSse = ensureHttps(body.dataset.mcpSse || (baseUrl + '/sse?token=' + token));
         const token = body.dataset.token;
         let selectedClient = 'claude';
 
@@ -407,8 +412,8 @@
             updateMcpPanel();
         }
         function getMcpPayload() {
-            const httpUrl = mcpHttp || baseUrl + '/mcp?token=' + token;
-            const sseUrl = mcpSse || baseUrl + '/sse?token=' + token;
+            const httpUrl = ensureHttps(mcpHttp || baseUrl + '/mcp?token=' + token);
+            const sseUrl = ensureHttps(mcpSse || baseUrl + '/sse?token=' + token);
             if (selectedClient === 'claude') {
                 return { text: httpUrl, help: 'Connecteur distant : collez l\'URL complète. Aucun secret OAuth requis.' };
             }

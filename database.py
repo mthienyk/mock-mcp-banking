@@ -157,7 +157,21 @@ def get_db_status() -> dict[str, str]:
     }
 
 
+_db_initialized = False
+
+
+def ensure_database_initialized() -> str:
+    """Lazy init au runtime (pas au build Railway)."""
+    global _db_initialized
+    if _db_initialized and SessionLocal is not None:
+        return DB_BACKEND
+    backend = initialize_database()
+    _db_initialized = True
+    return backend
+
+
 def get_db():
+    ensure_database_initialized()
     if SessionLocal is None:
         raise RuntimeError("Database not initialized")
     db = SessionLocal()
@@ -165,6 +179,3 @@ def get_db():
         yield db
     finally:
         db.close()
-
-
-initialize_database()

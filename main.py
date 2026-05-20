@@ -8,8 +8,9 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 
-from database import DB_BACKEND, SessionLocal, get_db, get_db_status
+from database import DB_BACKEND, ensure_database_initialized, get_db, get_db_status
 from mcp_bank.branding import PRODUCT_NAME, PRODUCT_TAGLINE
+from mcp_bank.public_url import resolve_public_base_url
 from mcp_bank import (
     create_session_manager,
     extract_api_token,
@@ -67,7 +68,7 @@ def _index_context(
     logged_in_user=None,
     error: str | None = None,
 ) -> dict[str, object]:
-    base = str(request.base_url).rstrip("/")
+    base = resolve_public_base_url(request)
     token = logged_in_user.token if logged_in_user else ""
     return {
         "request": request,
@@ -111,6 +112,7 @@ async def health() -> dict[str, str]:
     from mcp_bank.registry import bank_registry
     from mcp_bank.resources.definitions import ALL_RESOURCES
 
+    ensure_database_initialized()
     db = SessionLocal()
     try:
         student_count = services.count_students(db)

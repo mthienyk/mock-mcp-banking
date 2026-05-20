@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from mcp.types import CallToolResult, Tool
 from sqlalchemy.orm import Session
 
-from database import SessionLocal
+from database import SessionLocal, ensure_database_initialized
 from mcp_bank.errors import text_result
 from mcp_bank.runtime import require_session
 from models import User
@@ -45,6 +45,7 @@ class ToolRegistry:
         if entry is None:
             return text_result(f"Outil inconnu : {name}", is_error=True)
 
+        ensure_database_initialized()
         session = require_session()
         db = SessionLocal()
         try:

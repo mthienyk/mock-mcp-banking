@@ -1,6 +1,6 @@
 from fastapi import HTTPException, Request
 
-from database import SessionLocal
+from database import SessionLocal, ensure_database_initialized
 from mcp_bank.context import BankSessionContext
 import services
 
@@ -48,6 +48,7 @@ def extract_token_from_scope(scope: dict[str, object]) -> str | None:
 
 def resolve_session(token: str) -> BankSessionContext:
     """Validate token and return the bound MCP session context."""
+    ensure_database_initialized()
     db = SessionLocal()
     try:
         user = services.get_user_by_token(db, token)
