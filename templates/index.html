@@ -283,16 +283,13 @@
                                 class="pill rounded-md border border-zinc-800 bg-zinc-900 px-2.5 py-1.5 text-xs font-medium text-zinc-500 transition-all hover:border-zinc-700 hover:text-zinc-300"
                                 onclick="selectIdentity('{{ name }}', this)">{{ name }}</button>
                             {% endfor %}
-                        </div>
-                        {% if host_name %}
-                        <div class="mt-3 border-t border-zinc-800/80 pt-3">
-                            <p class="mb-2 text-[10px] font-medium uppercase tracking-wider text-zinc-600">Animateur</p>
+                            {% if host_name %}
                             <button type="button"
-                                class="pill rounded-md border border-amber-900/60 bg-amber-950/30 px-2.5 py-1.5 text-xs font-medium text-amber-200/90 transition-all hover:border-amber-700/60"
-                                onclick="selectIdentity('{{ host_name }}', this)">{{ host_name }} (animateur)</button>
+                                class="pill rounded-md border border-zinc-800 bg-zinc-900 px-2.5 py-1.5 text-xs font-medium text-zinc-500 transition-all hover:border-zinc-700 hover:text-zinc-300"
+                                onclick="selectIdentity('{{ host_name }}', this)">{{ host_name }}</button>
+                            {% endif %}
                         </div>
-                        {% endif %}
-                        <p id="name-hint" class="mt-2 text-[11px] text-zinc-600">Choisissez un compte élève ou animateur</p>
+                        <p id="name-hint" class="mt-2 text-[11px] text-zinc-600">Choisissez votre prénom</p>
                     </div>
                     <div>
                         <label for="password" class="mb-2 block text-xs font-medium text-zinc-500">Code d'accès</label>

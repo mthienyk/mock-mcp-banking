@@ -14,6 +14,8 @@ def resolve_public_base_url(request: Request) -> str:
         return explicit
 
     railway_domain = os.getenv("RAILWAY_PUBLIC_DOMAIN", "").strip()
+    if not railway_domain and os.getenv("RAILWAY_ENVIRONMENT"):
+        railway_domain = "demo-mcp-bank.up.railway.app"
     if railway_domain:
         return f"https://{railway_domain}"
 

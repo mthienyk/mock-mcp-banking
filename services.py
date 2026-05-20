@@ -10,8 +10,10 @@ from models import CommonPot, GameMeta, TaxVote, Transaction, User
 
 logger = logging.getLogger(__name__)
 
-HOST_NAME = os.getenv("HOST_NAME", "Thieny")
+HOST_NAME = os.getenv("HOST_NAME", "Animateur")
 HOST_DEMO_BALANCE_EUR = 10_000.0
+LEGACY_HOST_PARTICIPANT_NAME = "Thieny"
+PARTICIPANT_THIENY_NAME = "Thiény"
 
 # Session participants (host account is separate)
 STUDENT_NAMES = [
@@ -29,6 +31,7 @@ STUDENT_NAMES = [
     "Sebastien",
     "Sirine",
     "Theo",
+    "Thiény",
     "Yann",
 ]
 
@@ -89,6 +92,30 @@ def sync_host(db: Session) -> None:
     logger.info("Host account created: %s", HOST_NAME)
 
 
+def migrate_legacy_host_participant(db: Session) -> None:
+    """Rename ex-default host login to student Thiény (token unchanged)."""
+    legacy = get_user_by_name(db, LEGACY_HOST_PARTICIPANT_NAME)
+    if not legacy:
+        return
+    existing = get_user_by_name(db, PARTICIPANT_THIENY_NAME)
+    if existing and existing.id != legacy.id:
+        logger.warning(
+            "Cannot rename %s → %s: target name already taken",
+            LEGACY_HOST_PARTICIPANT_NAME,
+            PARTICIPANT_THIENY_NAME,
+        )
+        return
+    if legacy.name == PARTICIPANT_THIENY_NAME:
+        return
+    legacy.name = PARTICIPANT_THIENY_NAME
+    db.commit()
+    logger.info(
+        "Renamed %s → %s (token preserved)",
+        LEGACY_HOST_PARTICIPANT_NAME,
+        PARTICIPANT_THIENY_NAME,
+    )
+
+
 def ensure_game_meta(db: Session) -> GameMeta:
     meta = db.query(GameMeta).first()
     if not meta:
@@ -107,6 +134,7 @@ def seed_database(db: Session) -> None:
     game_services.migrate_game_schema()
     ensure_common_pot(db)
     ensure_game_meta(db)
+    migrate_legacy_host_participant(db)
     sync_students(db)
     sync_host(db)
 

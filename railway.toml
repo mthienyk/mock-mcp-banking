@@ -5,3 +5,7 @@ builder = "NIXPACKS"
 startCommand = "uvicorn main:app --host 0.0.0.0 --port $PORT --proxy-headers --forwarded-allow-ips='*'"
 # DB setup runs at web startup (lifespan), not here: Postgres internal DNS
 # is unavailable during the build/release container.
+
+[variables]
+PUBLIC_BASE_URL = "https://demo-mcp-bank.up.railway.app"
+HOST_NAME = "Animateur"
