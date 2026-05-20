@@ -3,48 +3,44 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>L'Élite MCP Bank — Promo IA 2026</title>
+    <title>MCP Bank</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
             theme: {
                 extend: {
-                    fontFamily: { sans: ['Inter', 'sans-serif'] },
-                }
-            }
-        }
+                    fontFamily: {
+                        sans: ['Geist', 'system-ui', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'ui-monospace', 'monospace'],
+                    },
+                },
+            },
+        };
     </script>
     <style>
-        body { font-family: 'Inter', sans-serif; }
-        .glow-green { text-shadow: 0 0 20px rgba(16, 185, 129, 0.4); }
-        .glass-panel {
-            background: rgba(24, 24, 27, 0.7);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            border: 1px solid rgba(63, 63, 70, 0.4);
+        .panel {
+            background: rgba(24, 24, 27, 0.85);
+            border: 1px solid rgba(63, 63, 70, 0.45);
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
         }
-        .modal-backdrop {
-            background: rgba(0, 0, 0, 0.75);
-            backdrop-filter: blur(8px);
-        }
-        .name-toggle.active {
-            background: linear-gradient(135deg, rgba(5, 150, 105, 0.35), rgba(20, 184, 166, 0.2));
-            border-color: rgba(16, 185, 129, 0.7);
-            color: #6ee7b7;
-            box-shadow: 0 0 0 1px rgba(16, 185, 129, 0.25);
-        }
-        .client-toggle.active {
-            background: rgba(16, 185, 129, 0.15);
-            border-color: rgba(16, 185, 129, 0.6);
+        .modal-backdrop { background: rgba(9, 9, 11, 0.82); backdrop-filter: blur(10px); }
+        .pill.active {
+            border-color: rgba(16, 185, 129, 0.55);
+            background: rgba(16, 185, 129, 0.12);
             color: #a7f3d0;
+        }
+        .tab.active {
+            border-color: rgba(161, 161, 170, 0.5);
+            color: #fafafa;
+            background: rgba(39, 39, 42, 0.8);
         }
     </style>
 </head>
 <body
-    class="h-full flex flex-col overflow-x-hidden selection:bg-emerald-500 selection:text-zinc-950"
+    class="min-h-[100dvh] flex flex-col selection:bg-emerald-600 selection:text-zinc-950"
     data-base-url="{{ base_url.rstrip('/') if base_url else '' }}"
     data-mcp-http="{{ mcp_http_url }}"
     data-mcp-sse="{{ mcp_sse_url }}"
@@ -53,226 +49,207 @@
     data-logged-in="{{ 'true' if logged_in_user else 'false' }}"
     data-open-login="{{ 'true' if error else 'false' }}"
 >
-
     {% if db_is_fallback %}
-    <div class="bg-amber-950/80 border-b border-amber-800/60 text-center py-2 px-4 text-xs text-amber-200 font-medium">
-        Mode démo local : PostgreSQL indisponible. Données en SQLite (session en cours, non partagées entre redéploiements).
+    <div class="border-b border-zinc-800 bg-zinc-900/90 px-4 py-2 text-center text-[11px] text-zinc-500">
+        Base locale active. Les données ne sont pas partagées avec le serveur principal.
     </div>
     {% endif %}
-    <header class="border-b border-zinc-800 bg-zinc-950/80 backdrop-blur-md sticky top-0 z-40">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-            <div class="flex items-center space-x-3">
-                <div class="h-9 w-9 rounded-lg bg-gradient-to-tr from-emerald-600 to-teal-400 flex items-center justify-center shadow-lg shadow-emerald-900/20">
-                    <span class="font-bold text-zinc-950 text-lg">€</span>
-                </div>
+
+    <header class="sticky top-0 z-40 border-b border-zinc-800/80 bg-zinc-950/90 backdrop-blur-md">
+        <div class="mx-auto flex h-14 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center gap-3">
+                <div class="flex h-8 w-8 items-center justify-center rounded-md border border-zinc-800 bg-zinc-900 font-mono text-xs text-emerald-500">M</div>
                 <div>
-                    <h1 class="text-md font-bold tracking-tight bg-gradient-to-r from-zinc-100 to-zinc-400 bg-clip-text text-transparent">L'Élite MCP Bank</h1>
-                    <p class="text-xs text-zinc-500 font-medium">Promo IA 2026</p>
+                    <p class="text-sm font-semibold tracking-tight text-zinc-100">MCP Bank</p>
+                    <p class="text-[11px] text-zinc-500">API bancaire simulée</p>
                 </div>
             </div>
-            <div class="flex items-center gap-2 sm:gap-3">
-                <div class="hidden sm:flex items-center space-x-2 bg-emerald-950/30 border border-emerald-900/50 rounded-full px-3 py-1">
-                    <span class="relative flex h-2 w-2">
-                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                        <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-                    </span>
-                    <span class="text-xs font-semibold text-emerald-400 uppercase tracking-wider">En ligne</span>
-                </div>
+            <div class="flex items-center gap-2">
                 {% if logged_in_user %}
-                <button type="button" onclick="openMcpModal()" class="text-xs font-semibold bg-emerald-600 hover:bg-emerald-500 text-zinc-950 px-3 py-1.5 rounded-lg transition-colors">
-                    Connecter mon IA
-                </button>
-                <a href="/logout" class="text-xs font-semibold text-zinc-400 hover:text-zinc-200 border border-zinc-800 hover:border-zinc-700 bg-zinc-900 px-3 py-1.5 rounded-md">Déconnexion</a>
+                <span class="hidden text-[11px] text-zinc-500 sm:inline">{{ logged_in_user.name }}</span>
+                <a href="/logout" class="rounded-md border border-zinc-800 px-3 py-1.5 text-xs font-medium text-zinc-400 transition-colors hover:border-zinc-700 hover:text-zinc-200">Quitter</a>
                 {% else %}
-                <button type="button" onclick="openLoginModal()" class="text-xs font-semibold bg-emerald-600 hover:bg-emerald-500 text-zinc-950 px-3 py-1.5 rounded-lg transition-colors">
-                    Se connecter
+                <button type="button" onclick="openLoginModal()" class="rounded-md bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-zinc-950 transition-all hover:bg-emerald-500 active:scale-[0.98]">
+                    Accéder
                 </button>
                 {% endif %}
             </div>
         </div>
     </header>
 
-    <main class="flex-grow py-8 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8">
+    <main class="mx-auto w-full max-w-7xl flex-grow px-4 py-10 sm:px-6 lg:px-8">
         {% if not logged_in_user %}
-        <div class="max-w-2xl mx-auto my-16 text-center">
-            <h2 class="text-4xl font-extrabold text-zinc-100 tracking-tight">Banque MCP de la promo</h2>
-            <p class="mt-4 text-zinc-400 text-sm leading-relaxed max-w-lg mx-auto">
-                Connectez Claude, Cursor ou Windsurf à votre compte bancaire virtuel.
-                Choisissez votre prénom, entrez le mot de passe promo, récupérez votre jeton en un clic.
-            </p>
-            <button type="button" onclick="openLoginModal()" class="mt-8 inline-flex items-center gap-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-zinc-950 font-bold py-3.5 px-8 rounded-xl shadow-lg shadow-emerald-950/30 transition-all active:scale-[0.98]">
-                <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/></svg>
-                Ouvrir le portail de connexion
-            </button>
-        </div>
-        {% else %}
-        <div class="space-y-8">
-            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-gradient-to-r from-zinc-900/60 to-zinc-900/20 border border-zinc-800/80 rounded-xl p-6">
-                <div>
-                    <h2 class="text-2xl font-bold text-zinc-100">Bonjour, <span class="text-emerald-400">{{ logged_in_user.name }}</span></h2>
-                    <p class="text-sm text-zinc-400 mt-1">Votre compte est actif. Configurez votre IA en un clic.</p>
+        <section class="grid min-h-[60dvh] grid-cols-1 items-center gap-12 lg:grid-cols-2 lg:gap-16">
+            <div>
+                <p class="text-xs font-medium uppercase tracking-widest text-zinc-500">Portail d'accès</p>
+                <h2 class="mt-3 text-4xl font-semibold tracking-tighter text-zinc-50 md:text-5xl">Récupérez votre jeton MCP</h2>
+                <p class="mt-4 max-w-md text-sm leading-relaxed text-zinc-500">
+                    Identifiez-vous pour obtenir un jeton API personnel. Collez-le dans Claude, Cursor ou tout client compatible.
+                </p>
+                <button type="button" onclick="openLoginModal()" class="mt-8 rounded-lg bg-emerald-600 px-6 py-3 text-sm font-semibold text-zinc-950 transition-all hover:bg-emerald-500 active:scale-[0.98]">
+                    Ouvrir la connexion
+                </button>
+            </div>
+            <div class="panel rounded-2xl p-8">
+                <p class="text-xs font-medium uppercase tracking-wider text-zinc-500">Aperçu</p>
+                <div class="mt-6 space-y-4 font-mono text-xs text-zinc-600">
+                    <p><span class="text-zinc-500">token</span> bank_…</p>
+                    <p><span class="text-zinc-500">endpoint</span> /mcp?token=…</p>
+                    <p><span class="text-zinc-500">tools</span> get_balances, transfer, withdraw, tax</p>
                 </div>
-                <button type="button" onclick="openMcpModal()" class="inline-flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-500 text-zinc-950 font-bold py-2.5 px-5 rounded-lg transition-colors text-sm">
-                    Connecter Claude / Cursor
+            </div>
+        </section>
+        {% else %}
+        <section class="grid grid-cols-1 gap-8 lg:grid-cols-12 lg:gap-10">
+            <div class="panel rounded-2xl p-6 sm:p-8 lg:col-span-5">
+                <p class="text-xs font-medium uppercase tracking-wider text-zinc-500">Credentials</p>
+                <h2 class="mt-2 text-2xl font-semibold tracking-tight text-zinc-50">Jeton API</h2>
+                <p class="mt-2 text-sm text-zinc-500">Compte <span class="text-zinc-300">{{ logged_in_user.name }}</span></p>
+
+                <div class="mt-6">
+                    <label class="mb-2 block text-xs font-medium text-zinc-500">Token</label>
+                    <div class="flex gap-2">
+                        <code id="token-display" class="flex-1 overflow-x-auto rounded-lg border border-zinc-800 bg-zinc-900/80 px-3 py-3 font-mono text-[11px] leading-relaxed text-emerald-400/90">{{ logged_in_user.token }}</code>
+                        <button type="button" onclick="copyToken()" id="copy-token-btn" class="shrink-0 rounded-lg border border-zinc-700 px-3 py-2 text-xs font-medium text-zinc-300 transition-all hover:border-zinc-600 hover:text-white active:scale-[0.98]">
+                            Copier
+                        </button>
+                    </div>
+                </div>
+
+                <div class="mt-5">
+                    <label class="mb-2 block text-xs font-medium text-zinc-500">URL MCP</label>
+                    <div class="flex gap-2">
+                        <code id="url-display" class="flex-1 overflow-x-auto rounded-lg border border-zinc-800 bg-zinc-900/80 px-3 py-3 font-mono text-[10px] leading-relaxed text-zinc-400">{{ mcp_http_url }}</code>
+                        <button type="button" onclick="copyUrl()" id="copy-url-btn" class="shrink-0 rounded-lg border border-zinc-700 px-3 py-2 text-xs font-medium text-zinc-300 transition-all hover:border-zinc-600 hover:text-white active:scale-[0.98]">
+                            Copier
+                        </button>
+                    </div>
+                </div>
+
+                <button type="button" onclick="openMcpModal()" class="mt-6 w-full rounded-lg bg-emerald-600 py-2.5 text-sm font-semibold text-zinc-950 transition-all hover:bg-emerald-500 active:scale-[0.98]">
+                    Guide de configuration
                 </button>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div class="glass-panel rounded-2xl p-6">
-                    <span class="text-xs font-bold text-zinc-500 uppercase tracking-wider">Solde personnel</span>
-                    <p class="mt-3 text-4xl font-extrabold text-zinc-100 glow-green">
-                        {{ "{:,.2f}".format(logged_in_user.balance).replace(",", " ").replace(".", ",") }} €
-                    </p>
+            <div class="space-y-6 lg:col-span-7">
+                <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                    <div class="border-t border-zinc-800 pt-4">
+                        <p class="text-xs font-medium uppercase tracking-wider text-zinc-500">Solde</p>
+                        <p class="mt-2 font-mono text-3xl font-medium tracking-tight text-zinc-100">
+                            {{ "{:,.2f}".format(logged_in_user.balance).replace(",", " ").replace(".", ",") }} €
+                        </p>
+                    </div>
+                    <div class="border-t border-zinc-800 pt-4">
+                        <p class="text-xs font-medium uppercase tracking-wider text-zinc-500">Pot commun</p>
+                        <p class="mt-2 font-mono text-3xl font-medium tracking-tight text-zinc-100">
+                            {{ "{:,.2f}".format(common_pot.balance).replace(",", " ").replace(".", ",") }} €
+                        </p>
+                    </div>
                 </div>
-                <div class="glass-panel rounded-2xl p-6">
-                    <span class="text-xs font-bold text-zinc-500 uppercase tracking-wider">Pot commun</span>
-                    <p class="mt-3 text-4xl font-extrabold bg-gradient-to-r from-emerald-400 to-teal-400 bg-clip-text text-transparent">
-                        {{ "{:,.2f}".format(common_pot.balance).replace(",", " ").replace(".", ",") }} €
-                    </p>
-                </div>
-            </div>
 
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <div class="glass-panel rounded-2xl p-6 lg:col-span-1">
-                    <h3 class="text-md font-bold text-zinc-100 mb-4">Votes de taxation</h3>
-                    {% if not active_votes %}
-                    <p class="text-xs text-zinc-500 text-center py-8">Aucun vote en cours</p>
+                <div class="border-t border-zinc-800 pt-6">
+                    <div class="mb-4 flex items-end justify-between">
+                        <h3 class="text-sm font-semibold text-zinc-200">Activité</h3>
+                        {% if active_votes %}
+                        <span class="text-[11px] text-zinc-500">{{ active_votes|length }} vote(s) ouvert(s)</span>
+                        {% endif %}
+                    </div>
+                    {% if not transactions %}
+                    <p class="py-8 text-center text-xs text-zinc-600">Aucune transaction enregistrée</p>
                     {% else %}
-                    <div class="space-y-3 max-h-[300px] overflow-y-auto">
-                        {% for target, voters in active_votes.items() %}
-                        <div class="bg-zinc-900/60 border border-zinc-850 rounded-xl p-3">
-                            <div class="flex justify-between items-center">
-                                <span class="text-sm font-bold">{{ target }}</span>
-                                <span class="text-[10px] text-amber-400 font-bold">{{ voters|length }}/2</span>
+                    <div class="divide-y divide-zinc-900">
+                        {% for tx in transactions[:12] %}
+                        <div class="flex items-center justify-between py-3 text-xs">
+                            <div>
+                                <p class="font-medium text-zinc-300">{{ tx.type }}</p>
+                                <p class="mt-0.5 font-mono text-[10px] text-zinc-600">{{ tx.timestamp.strftime('%H:%M:%S') }}</p>
                             </div>
-                            <p class="text-[11px] text-zinc-500 mt-1">{{ voters|join(', ') }}</p>
+                            <p class="font-mono text-zinc-400">{{ "{:,.2f}".format(tx.amount) }} €</p>
                         </div>
                         {% endfor %}
                     </div>
                     {% endif %}
                 </div>
-                <div class="glass-panel rounded-2xl p-6 lg:col-span-2">
-                    <h3 class="text-md font-bold text-zinc-100 mb-4">Transactions récentes</h3>
-                    {% if not transactions %}
-                    <p class="text-xs text-zinc-500 text-center py-8">Aucune transaction</p>
-                    {% else %}
-                    <div class="overflow-x-auto">
-                        <table class="min-w-full text-xs">
-                            <thead>
-                                <tr class="text-zinc-500 uppercase text-[10px]">
-                                    <th class="text-left py-2">Heure</th>
-                                    <th class="text-left py-2">Type</th>
-                                    <th class="text-right py-2">Montant</th>
-                                </tr>
-                            </thead>
-                            <tbody class="divide-y divide-zinc-900">
-                                {% for tx in transactions %}
-                                <tr>
-                                    <td class="py-2 font-mono text-zinc-500">{{ tx.timestamp.strftime('%H:%M') }}</td>
-                                    <td class="py-2 text-zinc-300">{{ tx.type }}</td>
-                                    <td class="py-2 text-right font-mono text-emerald-400">{{ "{:,.2f}".format(tx.amount) }} €</td>
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
-                    {% endif %}
-                </div>
             </div>
-        </div>
+        </section>
         {% endif %}
     </main>
 
-    <!-- Login modal -->
     <div id="login-modal" class="fixed inset-0 z-50 hidden" aria-hidden="true">
         <div class="modal-backdrop absolute inset-0" onclick="closeLoginModal()"></div>
-        <div class="relative z-10 flex min-h-full items-center justify-center p-4">
-            <div class="glass-panel w-full max-w-lg rounded-2xl shadow-2xl shadow-black/50 overflow-hidden" role="dialog" aria-labelledby="login-title">
-                <div class="flex items-center justify-between px-6 py-4 border-b border-zinc-800">
-                    <h2 id="login-title" class="text-lg font-bold text-zinc-100">Connexion au portail</h2>
-                    <button type="button" onclick="closeLoginModal()" class="text-zinc-500 hover:text-zinc-300 p-1" aria-label="Fermer">
-                        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        <div class="relative z-10 flex min-h-[100dvh] items-center justify-center p-4">
+            <div class="panel w-full max-w-md rounded-2xl" role="dialog" aria-labelledby="login-title">
+                <div class="flex items-center justify-between border-b border-zinc-800 px-6 py-4">
+                    <h2 id="login-title" class="text-base font-semibold text-zinc-100">Connexion</h2>
+                    <button type="button" onclick="closeLoginModal()" class="text-zinc-500 hover:text-zinc-300" aria-label="Fermer">
+                        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
                     </button>
                 </div>
-                <form action="/login" method="post" class="p-6 space-y-5" onsubmit="return validateLoginForm()">
+                <form action="/login" method="post" class="space-y-5 p-6" onsubmit="return validateLoginForm()">
                     <div>
-                        <label class="block text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-3">Votre prénom</label>
+                        <label class="mb-2 block text-xs font-medium text-zinc-500">Identité</label>
                         <input type="hidden" id="name-input" name="name" value="" required>
-                        <div class="flex flex-wrap gap-2 max-h-48 overflow-y-auto pr-1">
-                            {% for student in student_names %}
+                        <div class="flex max-h-40 flex-wrap gap-1.5 overflow-y-auto">
+                            {% for name in account_names %}
                             <button type="button"
-                                class="name-toggle px-3 py-1.5 rounded-full text-xs font-semibold border border-zinc-700 bg-zinc-900/80 text-zinc-400 hover:border-zinc-600 hover:text-zinc-200 transition-all"
-                                data-student="{{ student }}"
-                                onclick="selectStudent('{{ student }}', this)">
-                                {{ student }}
-                            </button>
+                                class="pill rounded-md border border-zinc-800 bg-zinc-900 px-2.5 py-1.5 text-xs font-medium text-zinc-500 transition-all hover:border-zinc-700 hover:text-zinc-300"
+                                onclick="selectIdentity('{{ name }}', this)">{{ name }}</button>
                             {% endfor %}
                         </div>
-                        <p id="name-hint" class="mt-2 text-[11px] text-zinc-600">Sélectionnez un prénom ci-dessus</p>
+                        <p id="name-hint" class="mt-2 text-[11px] text-zinc-600">Choisissez un compte</p>
                     </div>
                     <div>
-                        <label for="password" class="block text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-2">Mot de passe promo</label>
-                        <input type="password" id="password" name="password" required placeholder="mcp-promo-2026" class="w-full bg-zinc-900 border border-zinc-800 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 rounded-lg px-4 py-3 text-sm outline-none">
+                        <label for="password" class="mb-2 block text-xs font-medium text-zinc-500">Code d'accès</label>
+                        <input type="password" id="password" name="password" required
+                            class="w-full rounded-lg border border-zinc-800 bg-zinc-900 px-3 py-2.5 text-sm text-zinc-100 outline-none transition-colors focus:border-zinc-600"
+                            placeholder="Code partagé">
                     </div>
                     {% if error %}
-                    <div class="bg-rose-950/20 border border-rose-900/50 rounded-lg p-3 text-xs font-medium text-rose-400">{{ error }}</div>
+                    <p class="rounded-lg border border-rose-900/50 bg-rose-950/20 px-3 py-2 text-xs text-rose-400">{{ error }}</p>
                     {% endif %}
-                    <button type="submit" class="w-full bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-zinc-950 font-bold py-3 rounded-lg transition-all active:scale-[0.98]">
-                        Valider et accéder à mon compte
+                    <button type="submit" class="w-full rounded-lg bg-emerald-600 py-2.5 text-sm font-semibold text-zinc-950 transition-all hover:bg-emerald-500 active:scale-[0.98]">
+                        Obtenir mon jeton
                     </button>
                 </form>
             </div>
         </div>
     </div>
 
-    <!-- MCP setup modal (logged in only) -->
     {% if logged_in_user %}
     <div id="mcp-modal" class="fixed inset-0 z-50 hidden" aria-hidden="true">
         <div class="modal-backdrop absolute inset-0" onclick="closeMcpModal()"></div>
-        <div class="relative z-10 flex min-h-full items-center justify-center p-4">
-            <div class="glass-panel w-full max-w-xl rounded-2xl shadow-2xl shadow-black/50 overflow-hidden" role="dialog" aria-labelledby="mcp-title">
-                <div class="flex items-center justify-between px-6 py-4 border-b border-zinc-800">
-                    <div>
-                        <h2 id="mcp-title" class="text-lg font-bold text-zinc-100">Connecter votre IA</h2>
-                        <p class="text-xs text-zinc-500 mt-0.5">Compte : <span class="text-emerald-400">{{ logged_in_user.name }}</span></p>
-                    </div>
-                    <button type="button" onclick="closeMcpModal()" class="text-zinc-500 hover:text-zinc-300 p-1" aria-label="Fermer">
-                        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        <div class="relative z-10 flex min-h-[100dvh] items-center justify-center p-4">
+            <div class="panel w-full max-w-lg rounded-2xl" role="dialog" aria-labelledby="mcp-title">
+                <div class="flex items-center justify-between border-b border-zinc-800 px-6 py-4">
+                    <h2 id="mcp-title" class="text-base font-semibold text-zinc-100">Configuration client</h2>
+                    <button type="button" onclick="closeMcpModal()" class="text-zinc-500 hover:text-zinc-300" aria-label="Fermer">
+                        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
                     </button>
                 </div>
-                <div class="p-6 space-y-5">
+                <div class="space-y-5 p-6">
+                    <div class="rounded-lg border border-zinc-800 bg-zinc-900/60 px-3 py-2.5">
+                        <p class="text-[10px] uppercase tracking-wider text-zinc-600">Token</p>
+                        <p class="mt-1 break-all font-mono text-[11px] text-emerald-400/90">{{ logged_in_user.token }}</p>
+                    </div>
                     <div>
-                        <label class="block text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-2">Client IA</label>
-                        <div class="flex flex-wrap gap-2">
-                            <button type="button" class="client-toggle active px-4 py-2 rounded-lg text-xs font-semibold border border-zinc-700" data-client="claude" onclick="selectClient('claude', this)">Claude</button>
-                            <button type="button" class="client-toggle px-4 py-2 rounded-lg text-xs font-semibold border border-zinc-700" data-client="cursor" onclick="selectClient('cursor', this)">Cursor</button>
-                            <button type="button" class="client-toggle px-4 py-2 rounded-lg text-xs font-semibold border border-zinc-700" data-client="sse" onclick="selectClient('sse', this)">SSE (secours)</button>
+                        <p class="mb-2 text-xs font-medium text-zinc-500">Format</p>
+                        <div class="flex flex-wrap gap-1.5">
+                            <button type="button" class="tab active rounded-md border border-zinc-800 px-3 py-1.5 text-xs font-medium text-zinc-500" data-client="claude" onclick="selectClient('claude', this)">URL directe</button>
+                            <button type="button" class="tab rounded-md border border-zinc-800 px-3 py-1.5 text-xs font-medium text-zinc-500" data-client="cursor" onclick="selectClient('cursor', this)">JSON Cursor</button>
+                            <button type="button" class="tab rounded-md border border-zinc-800 px-3 py-1.5 text-xs font-medium text-zinc-500" data-client="sse" onclick="selectClient('sse', this)">SSE</button>
                         </div>
                     </div>
-                    <div id="mcp-instructions" class="text-xs text-zinc-400 leading-relaxed bg-zinc-900/50 border border-zinc-800 rounded-xl p-4"></div>
-                    <div>
-                        <label class="block text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-2">À copier</label>
-                        <div class="relative bg-zinc-950 border border-emerald-900/40 rounded-xl p-4">
-                            <pre id="mcp-copy-target" class="font-mono text-[11px] text-emerald-300/90 whitespace-pre-wrap break-all select-all"></pre>
-                        </div>
-                    </div>
+                    <p id="mcp-instructions" class="text-xs leading-relaxed text-zinc-500"></p>
+                    <pre id="mcp-copy-target" class="max-h-36 overflow-auto rounded-lg border border-zinc-800 bg-zinc-950 p-3 font-mono text-[10px] leading-relaxed text-zinc-400"></pre>
                     <div class="flex gap-2">
-                        <button type="button" onclick="copyMcpConfig()" id="mcp-copy-btn" class="flex-1 bg-emerald-600 hover:bg-emerald-500 text-zinc-950 font-bold py-2.5 rounded-lg text-sm transition-colors">
-                            Copier
-                        </button>
-                        <button type="button" onclick="closeMcpModal()" class="px-4 py-2.5 rounded-lg text-sm font-semibold border border-zinc-700 text-zinc-400 hover:text-zinc-200">
-                            Fermer
-                        </button>
+                        <button type="button" onclick="copyMcpConfig()" id="mcp-copy-btn" class="flex-1 rounded-lg bg-emerald-600 py-2.5 text-sm font-semibold text-zinc-950 transition-all hover:bg-emerald-500 active:scale-[0.98]">Copier</button>
+                        <button type="button" onclick="closeMcpModal()" class="rounded-lg border border-zinc-800 px-4 py-2.5 text-sm font-medium text-zinc-500 hover:text-zinc-300">Fermer</button>
                     </div>
                 </div>
             </div>
         </div>
     </div>
     {% endif %}
-
-    <footer class="border-t border-zinc-900 bg-zinc-950 py-6 text-center text-xs text-zinc-600 mt-12">
-        <p>© 2026 L'Élite MCP Bank — Promo IA</p>
-    </footer>
 
     <script>
         const body = document.body;
@@ -281,134 +258,108 @@
         const mcpHttp = body.dataset.mcpHttp;
         const mcpSse = body.dataset.mcpSse;
         const token = body.dataset.token;
-
         let selectedClient = 'claude';
 
         function openLoginModal() {
-            const modal = document.getElementById('login-modal');
-            modal.classList.remove('hidden');
-            modal.setAttribute('aria-hidden', 'false');
+            const m = document.getElementById('login-modal');
+            m.classList.remove('hidden');
+            m.setAttribute('aria-hidden', 'false');
             document.body.style.overflow = 'hidden';
         }
-
         function closeLoginModal() {
-            const modal = document.getElementById('login-modal');
-            modal.classList.add('hidden');
-            modal.setAttribute('aria-hidden', 'true');
+            const m = document.getElementById('login-modal');
+            m.classList.add('hidden');
+            m.setAttribute('aria-hidden', 'true');
             document.body.style.overflow = '';
         }
-
-        function selectStudent(name, btn) {
+        function selectIdentity(name, btn) {
             document.getElementById('name-input').value = name;
-            document.querySelectorAll('.name-toggle').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.pill').forEach(el => el.classList.remove('active'));
             btn.classList.add('active');
             const hint = document.getElementById('name-hint');
-            hint.textContent = 'Sélectionné : ' + name;
-            hint.classList.remove('text-zinc-600');
-            hint.classList.add('text-emerald-400');
+            hint.textContent = name;
+            hint.className = 'mt-2 text-[11px] text-emerald-500/90';
         }
-
         function validateLoginForm() {
-            const name = document.getElementById('name-input').value;
-            if (!name) {
-                document.getElementById('name-hint').textContent = 'Choisissez un prénom avant de continuer.';
-                document.getElementById('name-hint').classList.add('text-rose-400');
+            if (!document.getElementById('name-input').value) {
+                const hint = document.getElementById('name-hint');
+                hint.textContent = 'Sélection requise';
+                hint.className = 'mt-2 text-[11px] text-rose-400';
                 return false;
             }
             return true;
         }
-
         function openMcpModal() {
-            const modal = document.getElementById('mcp-modal');
-            if (!modal) return;
-            modal.classList.remove('hidden');
-            modal.setAttribute('aria-hidden', 'false');
+            const m = document.getElementById('mcp-modal');
+            if (!m) return;
+            m.classList.remove('hidden');
+            m.setAttribute('aria-hidden', 'false');
             document.body.style.overflow = 'hidden';
             updateMcpPanel();
         }
-
         function closeMcpModal() {
-            const modal = document.getElementById('mcp-modal');
-            if (!modal) return;
-            modal.classList.add('hidden');
-            modal.setAttribute('aria-hidden', 'true');
+            const m = document.getElementById('mcp-modal');
+            if (!m) return;
+            m.classList.add('hidden');
+            m.setAttribute('aria-hidden', 'true');
             document.body.style.overflow = '';
         }
-
         function selectClient(client, btn) {
             selectedClient = client;
-            document.querySelectorAll('.client-toggle').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.tab').forEach(el => el.classList.remove('active'));
             btn.classList.add('active');
             updateMcpPanel();
         }
-
         function getMcpPayload() {
-            const httpUrl = mcpHttp || (baseUrl + '/mcp?token=' + token);
-            const sseUrl = mcpSse || (baseUrl + '/sse?token=' + token);
+            const httpUrl = mcpHttp || baseUrl + '/mcp?token=' + token;
+            const sseUrl = mcpSse || baseUrl + '/sse?token=' + token;
             if (selectedClient === 'claude') {
-                return {
-                    text: httpUrl,
-                    help: 'Dans Claude : Paramètres → Connecteurs → Ajouter un connecteur personnalisé. Collez l\'URL ci-dessous (avec le jeton). Pas besoin d\'OAuth.',
-                };
+                return { text: httpUrl, help: 'Connecteur distant : collez l\'URL complète. Aucun secret OAuth requis.' };
             }
             if (selectedClient === 'cursor') {
-                const json = JSON.stringify({
-                    mcpServers: {
-                        'mcp-bank': { url: httpUrl }
-                    }
-                }, null, 2);
                 return {
-                    text: json,
-                    help: 'Dans Cursor : Settings → MCP → Add Server. Collez ce JSON ou l\'URL seule dans un serveur HTTP.',
+                    text: JSON.stringify({ mcpServers: { 'mcp-bank': { url: httpUrl } } }, null, 2),
+                    help: 'Cursor : Settings, MCP, ajoutez un serveur HTTP avec ce JSON.',
                 };
             }
-            const sseJson = JSON.stringify({
-                mcpServers: {
-                    'mcp-bank': { type: 'sse', url: sseUrl }
-                }
-            }, null, 2);
             return {
-                text: sseJson,
-                help: 'Transport SSE (ancien). Utilisez ce format si Streamable HTTP ne fonctionne pas.',
+                text: JSON.stringify({ mcpServers: { 'mcp-bank': { type: 'sse', url: sseUrl } } }, null, 2),
+                help: 'Fallback SSE si HTTP ne répond pas.',
             };
         }
-
         function updateMcpPanel() {
-            const payload = getMcpPayload();
-            document.getElementById('mcp-instructions').textContent = payload.help;
-            document.getElementById('mcp-copy-target').textContent = payload.text;
-            const copyBtn = document.getElementById('mcp-copy-btn');
-            if (copyBtn) copyBtn.textContent = 'Copier';
+            const p = getMcpPayload();
+            document.getElementById('mcp-instructions').textContent = p.help;
+            document.getElementById('mcp-copy-target').textContent = p.text;
+            const btn = document.getElementById('mcp-copy-btn');
+            if (btn) btn.textContent = 'Copier';
         }
-
-        function copyMcpConfig() {
-            const text = document.getElementById('mcp-copy-target').textContent;
+        function copyText(text, btnId, okLabel) {
             navigator.clipboard.writeText(text).then(() => {
-                const btn = document.getElementById('mcp-copy-btn');
-                btn.textContent = 'Copié !';
-                setTimeout(() => { btn.textContent = 'Copier'; }, 2000);
+                const btn = document.getElementById(btnId);
+                const prev = btn.textContent;
+                btn.textContent = okLabel;
+                setTimeout(() => { btn.textContent = prev; }, 1800);
             });
         }
-
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape') {
-                closeLoginModal();
-                closeMcpModal();
-            }
+        function copyToken() {
+            copyText(document.getElementById('token-display').textContent.trim(), 'copy-token-btn', 'OK');
+        }
+        function copyUrl() {
+            copyText(document.getElementById('url-display').textContent.trim(), 'copy-url-btn', 'OK');
+        }
+        function copyMcpConfig() {
+            copyText(document.getElementById('mcp-copy-target').textContent, 'mcp-copy-btn', 'Copié');
+        }
+        document.addEventListener('keydown', e => {
+            if (e.key === 'Escape') { closeLoginModal(); closeMcpModal(); }
         });
-
         document.addEventListener('DOMContentLoaded', () => {
             if (!isLoggedIn) {
-                if (body.dataset.openLogin === 'true') {
-                    openLoginModal();
-                } else {
-                    setTimeout(openLoginModal, 400);
-                }
-            } else {
-                const params = new URLSearchParams(window.location.search);
-                if (params.get('mcp') === '1') {
-                    openMcpModal();
-                }
+                if (body.dataset.openLogin === 'true') openLoginModal();
+                else setTimeout(openLoginModal, 350);
+            } else if (new URLSearchParams(location.search).get('mcp') === '1') {
+                openMcpModal();
             }
         });
     </script>

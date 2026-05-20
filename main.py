@@ -46,7 +46,7 @@ async def lifespan(_: FastAPI):
         yield
 
 
-app = FastAPI(title="L'Élite MCP Bank", lifespan=lifespan)
+app = FastAPI(title="MCP Bank", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
@@ -70,7 +70,7 @@ def _index_context(
     return {
         "request": request,
         "logged_in_user": logged_in_user,
-        "student_names": services.STUDENT_NAMES,
+        "account_names": services.STUDENT_NAMES,
         "common_pot": services.get_common_pot(db),
         "transactions": services.get_transactions_history(db, limit=20),
         "active_votes": services.get_active_votes_status(db),
@@ -129,7 +129,7 @@ async def login(
             _index_context(
                 request,
                 db,
-                error="Mot de passe de la promo incorrect.",
+                error="Code d'accès incorrect.",
             ),
         )
 
