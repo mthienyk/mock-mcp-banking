@@ -175,8 +175,8 @@
             <div class="glass-panel rounded-2xl p-6">
                 <div class="flex items-center justify-between mb-4">
                     <div>
-                        <h3 class="text-md font-bold text-zinc-100">Intégration Cursor & Windsurf</h3>
-                        <p class="text-xs text-zinc-400 mt-0.5">Copiez ce bloc de configuration dans les paramètres MCP de votre EDI.</p>
+                        <h3 class="text-md font-bold text-zinc-100">Intégration MCP (Cursor, Claude, Windsurf)</h3>
+                        <p class="text-xs text-zinc-400 mt-0.5">Utilisez l'URL <strong class="text-zinc-300">/mcp</strong> avec votre jeton. Ne mettez pas l'URL racine du site.</p>
                     </div>
                     <button id="copy-btn" onclick="copyConfig()" class="bg-zinc-800 hover:bg-zinc-700 text-zinc-200 hover:text-white transition-all text-xs font-semibold py-1.5 px-3 rounded-lg border border-zinc-700/60 flex items-center space-x-1.5 active:scale-[0.98]">
                         <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -196,7 +196,14 @@
   }
 }</pre>
                 </div>
-                <p class="text-[11px] text-zinc-500 font-semibold mb-2 uppercase tracking-wider">Secours (SSE, clients plus anciens)</p>
+                <p class="text-[11px] text-zinc-500 font-semibold mb-2 uppercase tracking-wider">Claude (connecteur distant)</p>
+                <div class="relative bg-zinc-900/60 border border-zinc-850 rounded-xl p-4 font-mono text-[11px] text-zinc-400 overflow-x-auto mb-4">
+                    <pre>URL : {{ mcp_http_url }}
+
+Ou avec en-tête :
+Authorization: Bearer {{ logged_in_user.token }}</pre>
+                </div>
+                <p class="text-[11px] text-zinc-500 font-semibold mb-2 uppercase tracking-wider">Secours SSE (Cursor ancien)</p>
                 <div class="relative bg-zinc-900/60 border border-zinc-850 rounded-xl p-4 font-mono text-[11px] text-zinc-500 overflow-x-auto">
                     <pre>{
   "mcpServers": {
@@ -210,8 +217,8 @@
 
                 <div class="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs text-zinc-400 pt-2 border-t border-zinc-850/60 font-medium">
                     <div>
-                        <p class="text-zinc-300 font-bold mb-1">Dans Cursor</p>
-                        <p><code class="bg-zinc-900 px-1 py-0.5 rounded text-emerald-400">Settings &gt; MCP</code>, ajoutez le serveur avec l'URL Streamable HTTP ci-dessus. Le LLM lit d'abord la ressource <code class="text-emerald-400/80">bank://balances</code>, puis utilise les 3 outils d'action.</p>
+                        <p class="text-zinc-300 font-bold mb-1">Claude / Cursor</p>
+                        <p>Connecteur personnalisé → URL <code class="text-emerald-400">.../mcp?token=...</code>. Pas OAuth : ignorez les erreurs <code class="text-zinc-500">.well-known/oauth</code> si le jeton est dans l'URL.</p>
                     </div>
                     <div>
                         <p class="text-zinc-300 font-bold mb-1">Règles du jeu</p>

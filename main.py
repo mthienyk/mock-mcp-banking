@@ -98,6 +98,7 @@ async def read_index(request: Request, db: Session = Depends(get_db)):
     token = request.cookies.get("session_token")
     user = services.get_user_by_token(db, token) if token else None
     return templates.TemplateResponse(
+        request,
         "index.html",
         _index_context(request, db, logged_in_user=user),
     )
@@ -113,6 +114,7 @@ async def login(
     expected_password = os.getenv("SHARED_PASSWORD", "mcp-promo-2026")
     if password != expected_password:
         return templates.TemplateResponse(
+            request,
             "index.html",
             _index_context(
                 request,
